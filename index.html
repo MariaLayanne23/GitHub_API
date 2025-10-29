@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub API - Ordenar Repositórios</title>
+    <style>
+      * {
+        padding: 0;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      hr {
+        margin: 10px;
+      }
+      .m-10 {
+        margin: 10px;
+      }
+      li {
+        display: flex;
+        flex-direction: column;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>GitHub API</h1>
+    <div>
+      <label for="">Nome do usuario: </label>
+      <input type="text" name="" id="user" />
+      <button onclick="getApi()">Buscar</button>
+      <label for="sort"> Ordenar por: </label>
+      <select id="sort">
+        <option value="created">Data de criação</option>
+        <option value="updated">Última atualização</option>
+        <option value="full_name">Nome</option>
+      </select>
+
+      <ul class="m-10"></ul>
+
+      <script>
+        function getApi() {
+          const ul = document.querySelector("ul");
+
+          ul.innerHTML = ""; // impede a repetição na busca, mas não limpa
+
+          const user = document.querySelector("#user").value.trim(); //.value pega o valor dentro do input buscar
+          const sortOption = document.querySelector("#sort").value;
+          if (!user) {
+            ul.innerHTML =
+              "<li>⚠️ Digite um nome de usuário antes de buscar!</li>";
+            return;
+          }
+          fetch(
+            `https://api.github.com/users/${user}/repos?sort=${sortOption}&direction=desc`
+          )
+            .then(async (res) => {
+              let data = await res.json();
+
+              data.map((item) => {
+                let li = document.createElement("li");
+                li.classList.add("m-10");
+
+                let hr = document.createElement("hr");
+
+                //nome dos repositorios
+                li.innerHTML = `<strong> ${item.name} </strong> 
+                <span><a href="${item.html_url}" target="_blank">${
+                  item.html_url
+                }</a> </span>
+                <span>Criado em: ${new Date(
+                  item.created_at
+                ).toLocaleDateString()} </span>
+                <span>${new Date(
+                  item.updated_at
+                ).toLocaleDateString()} </span> `;
+
+                ul.appendChild(li); // vai adicionar a cada nome
+                ul.appendChild(hr); // vai adicionar a cada nome
+              });
+            })
+            .catch((e) => {
+              console.log(e);
+
+              ul.innerHTML = ""; //limpando o html
+              let li = document.createElement("li");
+              li.classList.add("m-10");
+              li.innerHTML = `<strong> Erro ao buscar usuário </strong>`;
+
+              ul.appendChild(li);
+            });
+        }
+      </script>
+    </div>
+  </body>
+</html>

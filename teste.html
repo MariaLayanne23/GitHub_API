@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub API - Ordenar Repositórios</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 20px;
+      }
+      input,
+      select,
+      button {
+        margin: 5px;
+        padding: 5px 10px;
+      }
+      input {
+        margin-left: 110px;
+      }
+      .box {
+        width: 50%;
+        height: 100%;
+        border: 1px solid rgba(0, 0, 0, 0.356);
+        border-radius: 10px;
+      }
+      ul {
+        list-style: none;
+        padding: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      li {
+        flex: 1 1 calc(50% - 10px); /* cada li ocupa 25% menos o gap */
+        box-sizing: border-box;
+        background: #f5f5f5;
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+      }
+      a {
+        color: rgb(255, 162, 0);
+        text-decoration: none;
+      }
+      h1 {
+        text-align: center;
+      }
+      hr {
+        border: 0;
+        border-top: 1px solid #ccc;
+        margin: 5px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <h1>Buscar Repositórios do GitHub</h1>
+      <div class="select">
+        <input type="text" id="user" placeholder="Digite o usuário do GitHub" />
+        <button onclick="getRepos()">Buscar</button>
+        <label for="sort">Ordenar por:</label>
+        <select id="sort" onchange="ordenarRepos()">
+          <option value="name">Nome</option>
+          <option value="created">Data de criação</option>
+          <option value="updated">Última atualização</option>
+        </select>
+      </div>
+      <ul id="lista"></ul>
+    </div>
+
+    <script>
+      let repositorios = []; // Armazena os repositórios localmente
+
+      async function getRepos() {
+        const ul = document.querySelector("#lista");
+        ul.innerHTML = "";
+
+        const user = document.querySelector("#user").value.trim();
+        if (!user) {
+          ul.innerHTML = "<li> Digite um usuário!</li>";
+          return;
+        }
+
+        try {
+          const res = await fetch(`https://api.github.com/users/${user}/repos`);
+          if (!res.ok) throw new Error("Usuário não encontrado");
+
+          repositorios = await res.json();
+
+          if (repositorios.length === 0) {
+            ul.innerHTML = "<li>🕵️ Nenhum repositório público encontrado.</li>";
+            return;
+          }
+
+          exibirRepos(repositorios);
+        } catch (e) {
+          ul.innerHTML = `<li> ${e.message}</li>`;
+        }
+      }
+
+      function exibirRepos(lista) {
+        const ul = document.querySelector("#lista");
+        ul.innerHTML = "";
+
+        lista.forEach((item) => {
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <strong>${item.name}</strong>
+            <span><a href="${
+              item.html_url
+            }" target="_blank"> Acessar repositório</a></span>
+            <span> Criado em: ${new Date(
+              item.created_at
+            ).toLocaleDateString()}</span>
+            <span> Atualizado em: ${new Date(
+              item.updated_at
+            ).toLocaleDateString()}</span>
+          `;
+          ul.appendChild(li);
+        });
+      }
+
+      function ordenarRepos() {
+        const criterio = document.querySelector("#sort").value;
+        let listaOrdenada = [...repositorios];
+
+        if (criterio === "name") {
+          listaOrdenada.sort((a, b) => a.name.localeCompare(b.name));
+        } else if (criterio === "created") {
+          listaOrdenada.sort(
+            (a, b) => new Date(b.created_at) - new Date(a.created_at)
+          );
+        } else if (criterio === "updated") {
+          listaOrdenada.sort(
+            (a, b) => new Date(b.updated_at) - new Date(a.updated_at)
+          );
+        }
+
+        exibirRepos(listaOrdenada);
+      }
+    </script>
+  </body>
+</html>
